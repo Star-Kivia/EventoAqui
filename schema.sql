@@ -25,7 +25,7 @@ teste(Kauã_santos)
 -- TABELA: compra
 -- Colunas: id, data_compra, valor_total, metodo_pagamento, status, participante_id
 -- Regras: id automático e único, data preenchida automaticamente com o momento atual, valor obrigatório e não negativo, método de pagamento opcional, status com 4 valores e padrão 'pendente', participante_id obrigatório ligado à tabela participante
-
+teste(isaac)
 -- TABELA: ingresso
 -- Colunas: id, codigo, status, data_validacao, compra_id, lote_id
 -- Regras: id automático e único, código obrigatório e sem repetição (cada ingresso tem código único de validação), status com 3 valores e padrão, data de validação opcional (preenchida só no check-in), compra_id e lote_id obrigatórios ligados às tabelas pai
