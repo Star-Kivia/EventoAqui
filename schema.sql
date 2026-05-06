@@ -21,7 +21,7 @@ Teste(kauã)
 -- TABELA: lote_ingresso
 -- Colunas: id, nome, preco, capacidade_maxima, status, evento_id
 -- Regras: id automático e único, nome obrigatório, preço obrigatório (tipo para dinheiro com precisão exata, não pode ser negativo), capacidade obrigatória e maior que zero, status com 3 valores e padrão, evento_id obrigatório ligado à tabela evento, não pode ter dois lotes com mesmo nome no mesmo evento
-
+teste(Kauã_santos) 
 -- TABELA: compra
 -- Colunas: id, data_compra, valor_total, metodo_pagamento, status, participante_id
 -- Regras: id automático e único, data preenchida automaticamente com o momento atual, valor obrigatório e não negativo, método de pagamento opcional, status com 4 valores e padrão 'pendente', participante_id obrigatório ligado à tabela participante
