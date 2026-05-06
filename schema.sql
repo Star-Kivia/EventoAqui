@@ -1,53 +1,26 @@
--- Esqueleto 
--- Crie as tabelas na ordem: pai → filha → neta → bisneta
-
---Viktor
--- TABELA: organizador
--- Colunas: id, nome, documento, contato, cidade, status
--- Regras: id automático e único, nome obrigatório, documento obrigatório e sem repetição, status só aceita 'ativo' ou 'suspenso' e tem valor padrão
-
-create table organizador (
-  id SERIAL primary key,
-  nome VARCHAR(100) not null,
-  documento VARCHAR(14) not null unique,
-  check (
-    documento ~ '^[0-9]+$'
-    and length(documento) in (11, 14)
+-- Quem publica eventos na plataforma (empresa ou pessoa física)
+-- Relacionamento: um organizador pode ter VÁRIOS eventos (1:N)
+CREATE TABLE organizador (
+  id SERIAL PRIMARY KEY,                    -- PK automática, incrementa 1, 2, 3...
+  nome VARCHAR(100) NOT NULL,               -- Nome obrigatório
+  documento VARCHAR(14) NOT NULL UNIQUE,    -- CNPJ (14) ou CPF (11), não pode repetir
+  CHECK (
+    documento ~ '^[0-9]+$'                 -- Aceita apenas números
+    AND length(documento) IN (11, 14)       -- 11 dígitos (CPF) ou 14 (CNPJ)
   ),
-  contato VARCHAR(100),
-  cidade VARCHAR(80),
-  status VARCHAR(10) default 'ativo' check (status in ('ativo', 'suspenso')),
-  criado_em TIMESTAMPTZ default now()
+  contato VARCHAR(100),                     -- Telefone ou email (opcional)
+  cidade VARCHAR(80),                       -- Cidade do organizador (opcional)
+  status VARCHAR(20) DEFAULT 'ativo' CHECK (status IN ('ativo', 'suspenso')),
+  criado_em TIMESTAMPTZ DEFAULT NOW()       -- Data de cadastro automática
 );
 
---martins
--- TABELA: categoria_evento
--- Colunas: id, nome
--- Regras: id automático e único, nome obrigatório sem repetição, só aceita 6 valores (show, festival, workshop, palestra, teatro, esporte)
-
-create table evento (
-  id serial primary key,
-  titulo varchar(150) not null,
-  descricao text,
-  data_inicio timestamp not null,
-  data_fim timestamp not null,
-  local varchar(150) not null,
-  cidade varchar(100) not null,
-  status varchar(20) not null check (
-    status in ('rascunho', 'publicado', 'cancelado', 'encerrado')
-  ) default 'rascunho',
-  organizador_id integer not null references organizador (id) on delete restrict,
-  categoria_id integer not null references categoria_evento (id) on delete restrict
-);
-
---categoria de eventos  classificação do tipo de evento (show, festival, 
---workshop, palestra,teatro, esporte). Um evento pertence a uma categoria.
-
-create table if not exists CategoriaEvento (
-  id serial primary key,
-  nome varchar(100) not null unique 
-  check (
-    nome in (
+-- Classificação do tipo de evento (show, festival, workshop...)
+-- Relacionamento: uma categoria pode ter VÁRIOS eventos (1:N)
+CREATE TABLE categoria_evento (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL UNIQUE,        -- Nome único, não pode repetir
+  CHECK (
+    nome IN (                               -- Só aceita estes 6 valores
       'show',
       'festival',
       'workshop',
@@ -56,99 +29,92 @@ create table if not exists CategoriaEvento (
       'esporte'
     )
   )
-----check garante que categoria só pode existir se for o que está listado 
 );
 
---martins | viktor
--- TABELA: participante
--- Colunas: id, nome, email, cpf, data_nascimento, status
--- Regras: id automático e único, nome obrigatório, email obrigatório e sem repetição, cpf obrigatório e sem repetição (11 dígitos), data de nascimento obrigatória (só data, sem hora), status só aceita 'ativo' ou 'banido' com valor padrão
-
-create table participante (
-  id SERIAL primary key,
-  nome VARCHAR(100) not null,
-  email VARCHAR(100) unique not null,
-  cpf VARCHAR(11) unique not null,
-  data_nascimento DATE not null,
-  status VARCHAR(20) not null check (status in ('ativo', 'suspenso')) default 'ativo'
+-- Pessoa que compra ingressos na plataforma
+-- Relacionamento: um participante pode fazer VÁRIAS compras (1:N)
+CREATE TABLE participante (
+  id SERIAL PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  email VARCHAR(100) UNIQUE NOT NULL,       -- Email obrigatório e sem repetição
+  cpf VARCHAR(11) UNIQUE NOT NULL,          -- CPF obrigatório, 11 dígitos, sem repetição
+  data_nascimento DATE NOT NULL,            -- Apenas data (dia/mês/ano), sem hora
+  status VARCHAR(20) NOT NULL CHECK (status IN ('ativo', 'banido')) DEFAULT 'ativo'
 );
 
---martins
-create table if not exists Participante (
-  id_participante serial primary key ,
-  Nome varchar(50) not null,
-  Cpf varchar(11) unique not null, -- unique garante que só pode ser repetido uma vez por Participante e not null garante que o campo n pode ser nulo
-  email varchar(50) unique not null,
-  DataNascimento DATE not null, --Date  =  faz com que o que o campo seja preenchido apenas por dia/mes/ano
-  Status not null check (status in ('ativo', 'banido')) default 'ativo'
+-- O acontecimento publicado na plataforma
+-- Depende de: organizador (FK) e categoria_evento (FK)
+-- Relacionamento: um evento pertence a UM organizador e UMA categoria um evento pode ter VÁRIOS lotes (1:N)
+CREATE TABLE evento (
+  id SERIAL PRIMARY KEY,
+  titulo VARCHAR(150) NOT NULL,
+  descricao TEXT,                           -- TEXT: sem limite de tamanho, aceita NULL
+  data_inicio TIMESTAMPTZ NOT NULL,         -- TIMESTAMPTZ: data/hora COM fuso horário
+  data_fim TIMESTAMPTZ NOT NULL,            -- Converte para UTC e devolve no fuso do cliente
+  local VARCHAR(150) NOT NULL,
+  cidade VARCHAR(100) NOT NULL,
+  status VARCHAR(20) NOT NULL CHECK (
+    status IN ('rascunho', 'publicado', 'cancelado', 'encerrado')
+  ) DEFAULT 'rascunho',
+  organizador_id INTEGER NOT NULL REFERENCES organizador(id) ON DELETE RESTRICT,
+  -- FK: impede apagar organizador se existir evento vinculado
+  categoria_id INTEGER NOT NULL REFERENCES categoria_evento(id) ON DELETE RESTRICT
+  -- FK: impede apagar categoria se existir evento vinculado
 );
 
---isaac
--- TABELA: evento
--- Colunas: id, titulo, descricao, data_inicio, data_fim, local, cidade, status, organizador_id, categoria_id
--- Regras: id automático e único, titulo obrigatório, descricao opcional e sem limite de tamanho, datas obrigatórias e com fuso horário, local e cidade obrigatórios, status com 4 valores possíveis e padrão 'rascunho', organizador_id e categoria_id obrigatórios e ligados às tabelas pai (impede apagar pai se tiver evento vinculado)
-
---kauã_oliveira
--- TABELA: lote_ingresso
--- Colunas: id, nome, preco, capacidade_maxima, status, evento_id
--- Regras: id automático e único, nome obrigatório, preço obrigatório (tipo para dinheiro com precisão exata, não pode ser negativo), capacidade obrigatória e maior que zero, status com 3 valores e padrão, evento_id obrigatório ligado à tabela evento, não pode ter dois lotes com mesmo nome no mesmo evento
-
+-- Tipos de ingresso de um evento (inteira, meia, VIP...)
+-- Depende de: evento (FK)
+-- Relacionamento: um lote pertence a UM evento um lote pode ter VÁRIOS ingressos (1:N)
 CREATE TABLE lote_ingresso (
     id SERIAL PRIMARY KEY,
-    evento_id INTEGER NOT NULL,  -- trocar BIGINT por INTEGER
-    nome VARCHAR(20) NOT NULL,
+    evento_id INTEGER NOT NULL,             -- FK para evento
+    nome VARCHAR(50) NOT NULL,              -- Nome do lote (ex: Inteira, Meia, VIP)
     preco NUMERIC(10,2) NOT NULL CHECK (preco >= 0),
+    -- NUMERIC(10,2): dinheiro com precisão exata, nunca usar REAL
     capacidade_maxima INT NOT NULL CHECK (capacidade_maxima > 0),
-    status VARCHAR(20) NOT NULL CHECK (status IN ('disponivel','esgotado','encerrado')) DEFAULT 'disponivel',
+    -- CHECK: capacidade não pode ser zero nem negativa
+    status VARCHAR(20) NOT NULL CHECK (status IN ('disponivel', 'esgotado', 'encerrado')) DEFAULT 'disponivel',
     FOREIGN KEY (evento_id) REFERENCES evento(id) ON DELETE RESTRICT,
     UNIQUE (evento_id, nome)
+    -- Não pode ter dois lotes com mesmo nome no mesmo evento
 );
 
---kauã_oliveira
--- TABELA: compra
--- Colunas: id, data_compra, valor_total, metodo_pagamento, status, participante_id
--- Regras: id automático e único, data preenchida automaticamente com o momento atual, valor obrigatório e não negativo, método de pagamento opcional, status com 4 valores e padrão 'pendente', participante_id obrigatório ligado à tabela participante
-
---compra
-CREATE TABLE IF NOT EXISTS compra (
+-- Pedido de ingresso feito por um participante
+-- Depende de: participante (FK)
+-- Relacionamento: uma compra pertence a UM participante uma compra pode ter VÁRIOS ingressos (1:N)
+CREATE TABLE compra (
     id SERIAL PRIMARY KEY,
-    participante_id BIGINT NOT NULL,
-    data_compra TIMESTAMP DEFAULT NOW(),
-    valor_total NUMERIC(10,2),
-    metodo_pagamento VARCHAR(50),
-    status  VARCHAR(20) not null CHECK (status in ('pendente','aprovado','cancelado','estornado')) DEFAULT 'pendente',
-    participante_id INTEGER not null references participante (id) on delete RESTRICT
+    participante_id INTEGER NOT NULL REFERENCES participante(id) ON DELETE RESTRICT,
+    -- FK: impede apagar participante se existir compra vinculada
+    data_compra TIMESTAMPTZ DEFAULT NOW(),  -- Data/hora preenchida automaticamente
+    valor_total NUMERIC(10,2) NOT NULL CHECK (valor_total >= 0),
+    -- NUMERIC(10,2): precisão exata para dinheiro
+    metodo_pagamento VARCHAR(50),           -- Ex: cartao, pix, boleto (opcional)
+    status VARCHAR(20) NOT NULL CHECK (status IN ('pendente', 'aprovado', 'cancelado', 'estornado')) DEFAULT 'pendente'
 );
 
---kauã_vicente
---CREATE comando que cria a tabela ingresso, seguido do if not exists para no caso da tabela existir ele não cria-la novamente
-CREATE TABLE IF NOT EXISTS ingresso(
-    --chave primária da tabela que ao ser criada uma nova linha vai incrementando o id seguindo de 1, 2, 3... 
+-- Unidade individual de acesso, vinculada a uma compra e um lote
+-- Depende de: compra (FK) e lote_ingresso (FK)
+-- Relacionamento: um ingresso pertence a UMA compra e UM lote um ingresso pode ter NO MÁXIMO UM check-in (1:1)
+CREATE TABLE ingresso (
     id SERIAL PRIMARY KEY,
-    --codigo único onde não pode repetir em outro id de ingresso ao mesmo tempo e não pode ser nulo
-    codigo VARCHAR(20) UNIQUE NOT NULL,
-    --Status atual do ingresso com logíca para saber se está ativo, utilizado ou cancelado e DEFAULT comando que ao criar um ingresso faça com que ele esteja configurado como válido
-    status VARCHAR(20) NOT NULL CHECK(status in
-    ('valido', 'utilizado', 'cancelado')) DEFAULT 'valido',
-    --data de validação guarda o momento em que o ingresso for utilizado
-    data_validacao TIMESTAMPTZ,
-    --chave estrangeira referenciada da tabela compra, on delete restrict impede que se deletar a tabela pai as tabelas filhas sejam excluídas 
+    codigo VARCHAR(20) UNIQUE NOT NULL,     -- Código único de validação
+    -- UNIQUE: garantia de que não existem dois ingressos com o mesmo código
+    status VARCHAR(20) NOT NULL CHECK (status IN ('valido', 'utilizado', 'cancelado')) DEFAULT 'valido',
+    data_validacao TIMESTAMPTZ,             -- Preenchida no check-in, NULL enquanto não usado
     compra_id INTEGER NOT NULL REFERENCES compra(id) ON DELETE RESTRICT,
-    ----chave estrangeira referenciada da tabela lote_ingresso, on delete restrict impede que se deletar a tabela pai as tabelas filhas sejam excluídas
+    -- FK: ingresso pertence a uma compra
     lote_id INTEGER NOT NULL REFERENCES lote_ingresso(id) ON DELETE RESTRICT
+    -- FK: ingresso pertence a um lote específico
 );
--- TABELA: ingresso
--- Colunas: id, codigo, status, data_validacao, compra_id, lote_id
--- Regras: id automático e único, código obrigatório e sem repetição (cada ingresso tem código único de validação), status com 3 valores e padrão, data de validação opcional (preenchida só no check-in), compra_id e lote_id obrigatórios ligados às tabelas pai
 
---Kauã_vicente
-CREATE TABLE IF NOT EXISTS checkin (
-    --chave primária da tabela que ao ser criada uma nova linha vai incrementando o id seguindo de 1, 2, 3... 
+-- Registro de entrada do participante no evento
+-- Depende de: ingresso (FK)
+-- Relacionamento: cada check-in pertence a UM ingresso cada ingresso pode ter NO MÁXIMO UM check-in (1:1)
+CREATE TABLE checkin (
     id SERIAL PRIMARY KEY,
-    data_entrada TIMESTAMPTZ DEFAULT NOW(),
-    responsavel VARCHAR(100),
+    data_entrada TIMESTAMPTZ DEFAULT NOW(), -- Momento exato da validação na porta
+    responsavel VARCHAR(100),               -- Nome do porteiro/validador
     ingresso_id INTEGER NOT NULL UNIQUE REFERENCES ingresso(id) ON DELETE RESTRICT
+    -- FK UNIQUE: garante que cada ingresso tenha apenas UM check-in
 );
--- TABELA: checkin
--- Colunas: id, data_entrada, responsavel, ingresso_id
--- Regras: id automático e único, data preenchida automaticamente, responsável opcional, ingresso_id obrigatório, sem repetição (cada ingresso só tem um check-in) e ligado à tabela ingresso
