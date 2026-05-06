@@ -1,0 +1,130 @@
+================================================================================
+COLA DE COMANDOS GIT — PROJETO EVENTO AQUI
+Repositório: https://github.com/Star-Kivia/EventoAqui
+================================================================================
+
+================================================================================
+1. CONFIGURAÇÃO INICIAL (fazer uma única vez, cada membro no seu PC)
+================================================================================
+
+Abrir o terminal (Git Bash, CMD, PowerShell ou terminal do VSCode) e digitar:
+
+git config --global user.name "Seu Nome Completo"
+git config --global user.email "seu.email@exemplo.com"
+
+Use o mesmo email da sua conta do GitHub.
+
+Para verificar se configurou certo:
+git config --global user.name
+git config --global user.email
+
+
+================================================================================
+2. CLONAR O REPOSITÓRIO (fazer uma única vez)
+================================================================================
+
+No terminal, navegue até a pasta onde quer salvar o projeto e digite:
+
+git clone https://github.com/Star-Kivia/EventoAqui.git
+
+Isso cria uma pasta "EventoAqui" com todos os arquivos do projeto dentro.
+
+Depois de clonado, entre na pasta:
+cd EventoAqui
+
+
+================================================================================
+3. CICLO BÁSICO DE TRABALHO (fazer sempre que for alterar algo)
+================================================================================
+
+PASSO 1: ATUALIZAR seu código local (puxar alterações dos colegas)
+git pull origin main
+
+PASSO 2: Ver o que foi alterado (opcional, mas recomendado)
+git status
+
+PASSO 3: ADICIONAR os arquivos que você modificou
+git add nome_do_arquivo.sql
+OU para adicionar TODOS os arquivos alterados de uma vez:
+git add .
+
+PASSO 4: CRIAR O COMMIT (salvar suas alterações com uma mensagem)
+git commit -m "Sua mensagem curta explicando o que fez"
+
+Exemplos de boas mensagens:
+git commit -m "Criada a tabela organizador com constraints"
+git commit -m "Corrigido erro na query 4 (HAVING)"
+git commit -m "Adicionados comentários no schema.sql"
+
+PASSO 5: ENVIAR para o GitHub
+git push origin main
+
+
+================================================================================
+4. RESOLUÇÃO DE PROBLEMAS COMUNS
+================================================================================
+
+PROBLEMA: "Updates were rejected because the remote contains work"
+SOLUÇÃO: Alguém enviou alterações antes de você. Faça:
+git pull origin main
+(Resolva eventuais conflitos, depois git add, git commit, git push)
+
+PROBLEMA: "You have unstaged changes"
+SOLUÇÃO: Você esqueceu de adicionar os arquivos. Faça:
+git add .
+git commit -m "mensagem"
+git push origin main
+
+PROBLEMA: Arquivo errado foi adicionado (ex: .DS_Store, node_modules)
+SOLUÇÃO: Remova do staged:
+git reset nome_do_arquivo
+
+PROBLEMA: Deu conflito (CONFLICT) no merge
+SOLUÇÃO: Abra o arquivo com conflito, procure por <<<<<<< e >>>>>>>, 
+escolha qual versão manter, salve, depois:
+git add .
+git commit -m "Resolvido conflito"
+git push origin main
+
+PROBLEMA: Commit com mensagem errada (ainda não deu push)
+SOLUÇÃO: git commit --amend -m "Mensagem correta"
+
+PROBLEMA: Quer desfazer alterações em um arquivo (voltar ao último commit)
+SOLUÇÃO: git restore nome_do_arquivo
+
+
+================================================================================
+5. COMANDOS ÚTEIS
+================================================================================
+
+Ver o histórico de commits:
+git log --oneline
+
+Ver as diferenças entre o que você alterou e o último commit:
+git diff
+
+Ver apenas quais arquivos foram alterados:
+git status
+
+Ver o link do repositório remoto:
+git remote -v
+
+Mudar de branch:
+git checkout nome_da_branch
+
+Criar uma branch nova:
+git checkout -b nome_da_branch
+
+
+================================================================================
+6. RESUMO RÁPIDO (os 5 comandos que você mais vai usar)
+================================================================================
+
+git pull origin main      (puxar alterações dos colegas)
+git status                (ver o que mudou)
+git add .                 (preparar alterações)
+git commit -m "mensagem"  (salvar alterações)
+git push origin main      (enviar para o GitHub)
+
+1. SEMPRE faça git pull origin main ANTES de começar a trabalhar
+2. SEMPRE faça git pull origin main ANTES de dar git push
