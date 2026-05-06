@@ -54,12 +54,52 @@ order by
 -- Condição do grupo: contar eventos distintos, mostrar apenas quem tem mais de 1
 -- Colunas: nome do participante, quantidade de eventos distintos
 
+select
+  participante.nome as "Participante", -- Nome do participante
+  COUNT(distinct lote.evento_id) as "Eventos Distintos"
+  -- COUNT(DISTINCT): conta cada evento uma única vez por participante. Impede com que aparecam tipo 5 eventos com o mesmo ingresso 
+  -- lote está ligado a evento
+from
+  participante 
+  inner join compra on participante.id = compra.participante_id -- Puxa apenas participantes que tem pelo menos uma compra 
+  inner join ingresso  on compra.id = ingresso.compra_id -- pega os ingressos que o compra_id sejam iguais ao id da compra
+  inner join lote_ingresso lote on ingresso.lote_id = lote.id -- vai pegar o ID do loteingresso e comparar com lote_id puxando apenas o lote cujo id seja igual ao lote_id do ingresso
+where
+  ingresso.status in ('valido', 'utilizado') -- Só conta ingressos não cancelados
+  and compra.status = 'aprovado' -- Só conta compras aprovadas
+group by
+  participante.id, --se tiver 2 pessoas com mesmo nome vai separar 
+  participante.nome -- Agrupa por participante (id e nome)
+having
+  COUNT(distinct lote.evento_id) > 1 -- Filtra quem tem mais de 1 evento distinto
+order by
+  "Eventos Distintos" desc;
+
 -- PERGUNTA 4: Receita total por evento
 -- Tabelas: evento, organizador, lote_ingresso, ingresso, compra
 -- Filtros: apenas compras aprovadas
 -- Agrupamento: por evento e organizador
 -- Ordenação: receita decrescente
 -- Colunas: título do evento, nome do organizador, soma do valor_total
+
+select
+  evento.titulo as "Evento", -- Título do evento
+  organizador.nome as "Organizador", -- Nome do organizador
+  COALESCE(SUM(compra.valor_total), 0) as "Receita Total" -- COALESCE: se não houver compras, retorna 0 em vez de NULL ( COALESCE(..., 0) ). SUM = soma 
+from
+  evento
+  inner join organizador on evento.organizador_id = organizador.id -- o organizador_id do evento é igual ao id do organizador, entao ele puxa os dados do organizador
+  inner join lote_ingresso lote on lote.evento_id = evento.id -- Conecta evento aos seus lotes. Se o evento tiver 2 lotes, aparece 2 vezes
+  inner join ingresso on ingresso.lote_id = lote.id -- -- Puxa os ingressos de cada lote cada ingresso vendido gera uma linha
+  inner join compra  on ingresso.compra_id = compra.id -- Puxa a compra de cada ingresso onde esta o valortotal e o status da compra
+where
+  compra.status = 'aprovado' -- Filtra apenas compras aprovadas
+group by
+  evento.id, -- Garante que cada evento seja um grupo separado (mesmo que dois eventos tenham o mesmo nome)
+  evento.titulo,
+  organizador.nome -- Agrupa por evento  organizador
+order by
+  "Receita Total" desc;
 
 -- PERGUNTA 5: Eventos com lote esgotado
 -- Tabelas: evento, lote_ingresso
