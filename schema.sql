@@ -20,7 +20,6 @@ CREATE TABLE participante ();
 
 -- 2. Tabelas "filhas" (dependem das pais)
 -- (Evento depende de Organizador e Categoria)
-oi fih :D
 -- Tabela: evento
 -- TODO: FK para organizador, FK para categoria. Campos: titulo, descricao, data_inicio, data_fim, local, status
 CREATE TABLE evento ();
