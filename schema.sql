@@ -25,6 +25,21 @@ create table organizador (
 -- Colunas: id, nome
 -- Regras: id automático e único, nome obrigatório sem repetição, só aceita 6 valores (show, festival, workshop, palestra, teatro, esporte)
 
+create table evento (
+  id serial primary key,
+  titulo varchar(150) not null,
+  descricao text,
+  data_inicio timestamp not null,
+  data_fim timestamp not null,
+  local varchar(150) not null,
+  cidade varchar(100) not null,
+  status varchar(20) not null check (
+    status in ('rascunho', 'publicado', 'cancelado', 'encerrado')
+  ) default 'rascunho',
+  organizador_id integer not null references organizador (id) on delete restrict,
+  categoria_id integer not null references categoria_evento (id) on delete restrict
+);
+
 --categoria de eventos  classificação do tipo de evento (show, festival, 
 --workshop, palestra,teatro, esporte). Um evento pertence a uma categoria.
 
