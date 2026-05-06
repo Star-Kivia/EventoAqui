@@ -13,7 +13,7 @@
 -- TABELA: participante
 -- Colunas: id, nome, email, cpf, data_nascimento, status
 -- Regras: id automático e único, nome obrigatório, email obrigatório e sem repetição, cpf obrigatório e sem repetição (11 dígitos), data de nascimento obrigatória (só data, sem hora), status só aceita 'ativo' ou 'banido' com valor padrão
-
+Teste(kauã)
 -- TABELA: evento
 -- Colunas: id, titulo, descricao, data_inicio, data_fim, local, cidade, status, organizador_id, categoria_id
 -- Regras: id automático e único, titulo obrigatório, descricao opcional e sem limite de tamanho, datas obrigatórias e com fuso horário, local e cidade obrigatórios, status com 4 valores possíveis e padrão 'rascunho', organizador_id e categoria_id obrigatórios e ligados às tabelas pai (impede apagar pai se tiver evento vinculado)
