@@ -1,0 +1,215 @@
+================================================================================
+COLA DE ESTUDO — BANCO DE DADOS POSTGRESQL
+================================================================================
+
+Esta cola contém os pontos mais importantes das aulas 01 a 08.
+Use como referência para preencher os esqueletos e se preparar para a defesa.
+Não contém código pronto — apenas os conceitos que você precisa aplicar.
+
+
+================================================================================
+AULA 01 — O QUE É BANCO RELACIONAL
+================================================================================
+
+- Banco relacional organiza dados em TABELAS com regras que garantem consistência
+- TABELA: estrutura com linhas e colunas, representa algo do mundo real
+- LINHA (REGISTRO): cada item completo da tabela (ex: um cliente)
+- COLUNA (CAMPO): cada característica do item (ex: nome, email, idade)
+- Diferente da planilha: o banco TEM REGRAS e rejeita dados errados
+- CHAVE PRIMÁRIA (PK): identificador único de cada linha. Nunca nula, nunca repete
+- CHAVE ESTRANGEIRA (FK): coluna que referencia a PK de outra tabela
+- INTEGRIDADE REFERENCIAL: a FK precisa existir na tabela pai
+- SELECT * FROM tabela; — comando básico para ver todos os dados
+- PostgreSQL: open source, ACID completo, confiável
+
+================================================================================
+AULA 02 — TIPOS DE DADOS E CONSTRAINTS
+================================================================================
+
+TIPOS NUMÉRICOS:
+- INTEGER: números inteiros (IDs, quantidades) — 4 bytes, escolha padrão
+- SERIAL: inteiro com incremento automático — padrão para PK
+- NUMERIC(p,s): números com precisão exata — USAR PARA DINHEIRO
+- NUNCA USE REAL ou DOUBLE PRECISION para dinheiro — causam erro de arredondamento
+- REAL/DOUBLE: ponto flutuante, guarda valores aproximados — use só para coordenadas, medidas não financeiras
+
+TIPOS DE TEXTO:
+- VARCHAR(n): texto com limite definido (ex: nome, email, título)
+- TEXT: texto sem limite (ex: descrições longas, comentários)
+- CHAR(n): tamanho FIXO (ex: sigla de estado com 2 caracteres)
+- Performance entre VARCHAR e TEXT é igual no PostgreSQL
+
+DATAS:
+- TIMESTAMPTZ: data e hora COM fuso horário — converte para UTC, devolve no fuso do cliente
+- TIMESTAMP: data e hora SEM fuso — EVITE, causa confusão entre fusos
+- DATE: apenas dia/mês/ano, sem hora — use para data de nascimento
+- Regra: tudo que registra "quando aconteceu" usa TIMESTAMPTZ
+
+NULL:
+- NULL significa "desconhecido", NÃO é zero nem texto vazio
+- Para verificar se algo é nulo: usar IS NULL ou IS NOT NULL
+- NUNCA usar = NULL (não funciona, retorna vazio sem dar erro)
+
+CONSTRAINTS (regras na tabela que o banco garante sozinho):
+- NOT NULL: coluna nunca pode ficar vazia
+- UNIQUE: valor não pode repetir na tabela
+- CHECK: valida uma condição (ex: preço >= 0, status IN ('a','b'))
+- DEFAULT: valor padrão quando nada é informado
+- PRIMARY KEY: combinação de NOT NULL + UNIQUE, cada tabela tem UMA
+- FOREIGN KEY: garante que o valor existe na tabela pai
+- ON DELETE RESTRICT: impede deletar pai se existem filhos
+- ON DELETE CASCADE: deleta os filhos junto com o pai (PERIGOSO)
+
+================================================================================
+AULA 03 — INSERT, UPDATE, DELETE
+================================================================================
+
+INSERT:
+- Sintaxe: INSERT INTO tabela (colunas) VALUES (valores);
+- Colunas e valores precisam estar na mesma ordem
+- SERIAL (PK) e DEFAULT são preenchidos automaticamente
+- Dá para inserir várias linhas de uma vez (mais rápido)
+- RETURNING id: devolve o ID gerado automaticamente
+- INSERT INTO ... SELECT: copiar dados de outra tabela
+
+UPDATE:
+- Sempre use WHERE — sem ele, ALTERA TODAS AS LINHAS
+- Regra de ouro: faça um SELECT com o mesmo WHERE antes de executar o UPDATE
+- Não tem "desfazer" — use transaction (aula 04) para testar antes
+
+DELETE:
+- Remove LINHAS, a tabela continua existindo
+- Mesma regra: sempre com WHERE, senão esvazia a tabela inteira
+- TRUNCATE: esvazia a tabela mais rápido, mas não aceita WHERE
+- Ordem de deleção: filhos primeiro, depois os pais
+
+================================================================================
+AULA 04 — TRANSACTIONS (BEGIN, COMMIT, ROLLBACK)
+================================================================================
+
+- Transaction: bloco de operações que o banco trata como UMA UNIDADE
+- BEGIN: abre a transaction, tudo fica isolado e provisório
+- COMMIT: confirma permanentemente tudo que foi feito
+- ROLLBACK: desfaz tudo que foi feito desde o BEGIN
+- Se acontecer erro no meio, o banco marca como corrompida e recusa COMMIT
+- Sempre use transaction para operações que precisam acontecer JUNTAS
+
+ACID:
+- A (Atomicidade): ou tudo acontece, ou nada
+- C (Consistência): vai de um estado válido para outro, respeita constraints
+- I (Isolamento): outras sessões não veem dados não commitados
+- D (Durabilidade): após COMMIT, sobrevive a queda de energia
+
+SAVEPOINT:
+- Ponto de controle dentro da transaction
+- ROLLBACK TO savepoint: volta só até aquele ponto
+- Útil para transações longas com múltiplas etapas
+
+================================================================================
+AULA 05 — SELECT, WHERE, ORDER BY, LIMIT, DISTINCT
+================================================================================
+
+SELECT:
+- SELECT colunas FROM tabela; — colunas que quero ver, de onde vêm
+- SELECT * traz todas as colunas (evite em código final)
+- AS: renomeia coluna temporariamente no resultado
+
+WHERE:
+- Filtra LINHAS com condições
+- Operadores: =, !=, >, <, >=, <=
+- BETWEEN: valor entre dois extremos (inclusive)
+- IN: valor está em uma lista
+- LIKE: busca com % (qualquer coisa) e _ (um caractere)
+- ILIKE: igual LIKE mas ignora maiúsculas/minúsculas
+- IS NULL / IS NOT NULL: verifica nulidade
+- AND tem precedência sobre OR — use parênteses para deixar claro
+
+ORDER BY:
+- ASC: crescente (padrão), DESC: decrescente
+- NULLS FIRST / NULLS LAST: controla onde nulos aparecem
+
+LIMIT e OFFSET:
+- LIMIT: número máximo de linhas
+- OFFSET: pula N linhas antes de começar
+- Paginação: OFFSET = (página - 1) * LIMIT
+
+DISTINCT:
+- Remove duplicatas do resultado
+- Avalia a combinação de todas as colunas listadas
+
+================================================================================
+AULA 06 — AGREGAÇÕES (COUNT, SUM, AVG, GROUP BY, HAVING)
+================================================================================
+
+FUNÇÕES DE AGREGAÇÃO (transformam várias linhas em um valor):
+- COUNT(*): conta todas as linhas
+- COUNT(coluna): conta valores não nulos da coluna
+- SUM: soma valores
+- AVG: média
+- MIN/MAX: menor/maior valor
+- ROUND(valor, casas): arredonda
+
+GROUP BY:
+- Divide os resultados em grupos
+- Regra de ouro: toda coluna no SELECT que NÃO está em função de agregação
+  PRECISA estar no GROUP BY
+- Inclua SEMPRE o ID da tabela no GROUP BY, mesmo que não apareça no SELECT
+  (evita juntar registros de nomes iguais mas IDs diferentes)
+
+HAVING:
+- Filtra GRUPOS (depois do GROUP BY)
+- WHERE filtra LINHAS (antes do GROUP BY)
+- No HAVING pode usar funções de agregação, no WHERE não
+
+================================================================================
+AULA 07 — JOINS (INNER JOIN, LEFT JOIN)
+================================================================================
+
+ENTIDADE-RELACIONAMENTO:
+- Entidade: algo do mundo real que vira tabela
+- Cardinalidade: quantos de um lado, quantos do outro
+- 1:1: um passaporte para uma pessoa
+- 1:N: um artista tem muitos álbuns, cada álbum é de um artista
+- N:N: uma faixa pode estar em várias playlists, uma playlist tem várias faixas
+- N:N exige TABELA INTERMEDIÁRIA (ponte)
+
+INNER JOIN:
+- Retorna APENAS linhas com correspondência nos dois lados
+- Use quando quer só registros que têm par
+
+LEFT JOIN:
+- Retorna TODAS as linhas da tabela da esquerda
+- Onde não tem correspondência na direita, preenche com NULL
+- Use quando quer manter registros mesmo sem par
+- LEFT JOIN + WHERE coluna IS NULL: encontra quem NÃO tem correspondência
+
+ALIAS DE TABELA:
+- Apelido curto no FROM para simplificar a query
+- Ex: FROM evento e INNER JOIN organizador o
+
+================================================================================
+AULA 08 — SUBQUERIES E CTEs
+================================================================================
+
+SUBQUERY NO WHERE:
+- Retorna um valor (escalar) para comparar com =, >, <
+- Retorna uma lista para usar com IN, NOT IN
+- A subquery executa primeiro, o resultado alimenta a query externa
+
+SUBQUERY NO FROM:
+- Trata o resultado como uma tabela temporária
+- Regra do PostgreSQL: toda subquery no FROM precisa de ALIAS
+- Útil para agregar sobre agregação (ex: média de somas)
+
+CTE (WITH):
+- Bloco nomeado definido antes da query principal
+- Leitura de cima para baixo (mais fácil que subquery)
+- Pode ser reutilizada várias vezes na mesma query
+- Múltiplas CTEs separadas por vírgula
+- Uma CTE pode usar a CTE definida acima dela
+- CTE + JOIN: prepara dados agregados e depois cruza com outras tabelas
+
+QUANDO USAR O QUÊ:
+- Subquery escalar: verificações rápidas no WHERE
+- Subquery no FROM: cálculos intermediários simples
+- CTE: lógicas complexas com múltiplas etapas, reuso, legibilidade
