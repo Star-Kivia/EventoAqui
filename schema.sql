@@ -25,6 +25,25 @@ create table organizador (
 -- Colunas: id, nome
 -- Regras: id automático e único, nome obrigatório sem repetição, só aceita 6 valores (show, festival, workshop, palestra, teatro, esporte)
 
+--categoria de eventos  classificação do tipo de evento (show, festival, 
+--workshop, palestra,teatro, esporte). Um evento pertence a uma categoria.
+
+create table if not exists CategoriaEvento (
+  id serial primary key,
+  nome varchar(100) not null unique 
+  check (
+    nome in (
+      'show',
+      'festival',
+      'workshop',
+      'palestra',
+      'teatro',
+      'esporte'
+    )
+  )
+----check garante que categoria só pode existir se for o que está listado 
+);
+
 --martins | viktor
 -- TABELA: participante
 -- Colunas: id, nome, email, cpf, data_nascimento, status
@@ -37,6 +56,16 @@ create table participante (
   cpf VARCHAR(11) unique not null,
   data_nascimento DATE not null,
   status VARCHAR(20) not null check (status in ('ativo', 'suspenso')) default 'ativo'
+);
+
+--martins
+create table if not exists Participante (
+  id_participante serial primary key ,
+  Nome varchar(50) not null,
+  Cpf varchar(11) unique not null, -- unique garante que só pode ser repetido uma vez por Participante e not null garante que o campo n pode ser nulo
+  email varchar(50) unique not null,
+  DataNascimento DATE not null, --Date  =  faz com que o que o campo seja preenchido apenas por dia/mes/ano
+  Status not null check (status in ('ativo', 'banido')) default 'ativo'
 );
 
 --isaac
