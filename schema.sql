@@ -5,7 +5,7 @@
 -- TABELA: organizador
 -- Colunas: id, nome, documento, contato, cidade, status
 -- Regras: id automático e único, nome obrigatório, documento obrigatório e sem repetição, status só aceita 'ativo' ou 'suspenso' e tem valor padrão
-
+teste(martins)
 -- TABELA: categoria_evento
 -- Colunas: id, nome
 -- Regras: id automático e único, nome obrigatório sem repetição, só aceita 6 valores (show, festival, workshop, palestra, teatro, esporte)
