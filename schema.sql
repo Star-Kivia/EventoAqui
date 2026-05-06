@@ -93,10 +93,32 @@ create table if not exists Participante (
 -- Colunas: id, nome, preco, capacidade_maxima, status, evento_id
 -- Regras: id automático e único, nome obrigatório, preço obrigatório (tipo para dinheiro com precisão exata, não pode ser negativo), capacidade obrigatória e maior que zero, status com 3 valores e padrão, evento_id obrigatório ligado à tabela evento, não pode ter dois lotes com mesmo nome no mesmo evento
 
+CREATE TABLE lote_ingresso (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL,  -- trocar BIGINT por INTEGER
+    nome VARCHAR(20) NOT NULL,
+    preco NUMERIC(10,2) NOT NULL CHECK (preco >= 0),
+    capacidade_maxima INT NOT NULL CHECK (capacidade_maxima > 0),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('disponivel','esgotado','encerrado')) DEFAULT 'disponivel',
+    FOREIGN KEY (evento_id) REFERENCES evento(id) ON DELETE RESTRICT,
+    UNIQUE (evento_id, nome)
+);
+
 --kauã_oliveira
 -- TABELA: compra
 -- Colunas: id, data_compra, valor_total, metodo_pagamento, status, participante_id
 -- Regras: id automático e único, data preenchida automaticamente com o momento atual, valor obrigatório e não negativo, método de pagamento opcional, status com 4 valores e padrão 'pendente', participante_id obrigatório ligado à tabela participante
+
+--compra
+CREATE TABLE IF NOT EXISTS compra (
+    id SERIAL PRIMARY KEY,
+    participante_id BIGINT NOT NULL,
+    data_compra TIMESTAMP DEFAULT NOW(),
+    valor_total NUMERIC(10,2),
+    metodo_pagamento VARCHAR(50),
+    status  VARCHAR(20) not null CHECK (status in ('pendente','aprovado','cancelado','estornado')) DEFAULT 'pendente',
+    participante_id INTEGER not null references participante (id) on delete RESTRICT
+);
 
 --kauã_vicente
 --CREATE comando que cria a tabela ingresso, seguido do if not exists para no caso da tabela existir ele não cria-la novamente
