@@ -9,7 +9,7 @@
 -- TABELA: categoria_evento
 -- Colunas: id, nome
 -- Regras: id automático e único, nome obrigatório sem repetição, só aceita 6 valores (show, festival, workshop, palestra, teatro, esporte)
-
+teste (vitor)
 -- TABELA: participante
 -- Colunas: id, nome, email, cpf, data_nascimento, status
 -- Regras: id automático e único, nome obrigatório, email obrigatório e sem repetição, cpf obrigatório e sem repetição (11 dígitos), data de nascimento obrigatória (só data, sem hora), status só aceita 'ativo' ou 'banido' com valor padrão
