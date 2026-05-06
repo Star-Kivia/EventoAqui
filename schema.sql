@@ -99,11 +99,34 @@ create table if not exists Participante (
 -- Regras: id automático e único, data preenchida automaticamente com o momento atual, valor obrigatório e não negativo, método de pagamento opcional, status com 4 valores e padrão 'pendente', participante_id obrigatório ligado à tabela participante
 
 --kauã_vicente
+--CREATE comando que cria a tabela ingresso, seguido do if not exists para no caso da tabela existir ele não cria-la novamente
+CREATE TABLE IF NOT EXISTS ingresso(
+    --chave primária da tabela que ao ser criada uma nova linha vai incrementando o id seguindo de 1, 2, 3... 
+    id SERIAL PRIMARY KEY,
+    --codigo único onde não pode repetir em outro id de ingresso ao mesmo tempo e não pode ser nulo
+    codigo VARCHAR(20) UNIQUE NOT NULL,
+    --Status atual do ingresso com logíca para saber se está ativo, utilizado ou cancelado e DEFAULT comando que ao criar um ingresso faça com que ele esteja configurado como válido
+    status VARCHAR(20) NOT NULL CHECK(status in
+    ('valido', 'utilizado', 'cancelado')) DEFAULT 'valido',
+    --data de validação guarda o momento em que o ingresso for utilizado
+    data_validacao TIMESTAMPTZ,
+    --chave estrangeira referenciada da tabela compra, on delete restrict impede que se deletar a tabela pai as tabelas filhas sejam excluídas 
+    compra_id INTEGER NOT NULL REFERENCES compra(id) ON DELETE RESTRICT,
+    ----chave estrangeira referenciada da tabela lote_ingresso, on delete restrict impede que se deletar a tabela pai as tabelas filhas sejam excluídas
+    lote_id INTEGER NOT NULL REFERENCES lote_ingresso(id) ON DELETE RESTRICT
+);
 -- TABELA: ingresso
 -- Colunas: id, codigo, status, data_validacao, compra_id, lote_id
 -- Regras: id automático e único, código obrigatório e sem repetição (cada ingresso tem código único de validação), status com 3 valores e padrão, data de validação opcional (preenchida só no check-in), compra_id e lote_id obrigatórios ligados às tabelas pai
 
 --Kauã_vicente
+CREATE TABLE IF NOT EXISTS checkin (
+    --chave primária da tabela que ao ser criada uma nova linha vai incrementando o id seguindo de 1, 2, 3... 
+    id SERIAL PRIMARY KEY,
+    data_entrada TIMESTAMPTZ DEFAULT NOW(),
+    responsavel VARCHAR(100),
+    ingresso_id INTEGER NOT NULL UNIQUE REFERENCES ingresso(id) ON DELETE RESTRICT
+);
 -- TABELA: checkin
 -- Colunas: id, data_entrada, responsavel, ingresso_id
 -- Regras: id automático e único, data preenchida automaticamente, responsável opcional, ingresso_id obrigatório, sem repetição (cada ingresso só tem um check-in) e ligado à tabela ingresso
