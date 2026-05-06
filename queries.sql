@@ -106,6 +106,15 @@ order by
 -- Filtro: status do lote igual a 'esgotado'
 -- Colunas: título do evento, nome do lote
 
+select
+  e.titulo as "Evento", -- Nome do evento
+  l.nome as "Lote Esgotado" -- Nome do lote esgotado
+from
+  evento e
+  inner join lote_ingresso l on e.id = l.evento_id -- INNER JOIN: lote pertence a um evento
+where
+  l.status = 'esgotado'; -- Filtra apenas os lotes que já esgotaram
+
 -- PERGUNTA 6: Percentual de presença em eventos encerrados
 -- Tabelas: evento, lote_ingresso, ingresso, checkin
 -- Filtros: evento status 'encerrado', ingresso não cancelado
@@ -121,12 +130,52 @@ order by
 -- Dica: use junção que mantém os registros da esquerda mesmo sem correspondência na direita
 -- Colunas: nome do participante, título do evento, data do evento
 
+select
+  p.nome as "Participante", -- Nome do participante
+  e.titulo as "Evento", -- Título do evento
+  e.data_inicio as "Data do Evento" -- Data de início do evento
+from
+  participante p
+  inner join compra c on p.id = c.participante_id -- liga Participante a compra
+  inner join ingresso i on c.id = i.compra_id -- Compra ao ingresso
+  inner join lote_ingresso l on i.lote_id = l.id -- Ingresso ao lote
+  inner join evento e on l.evento_id = e.id -- Lote ao evento
+  and e.status = 'encerrado' -- Apenas eventos encerrados
+  left join checkin ck on ck.ingresso_id = i.id -- LEFT JOIN: verifica se houve check-in
+where
+  ck.id is null
+  and i.status in ('valido', 'utilizado') -- Ingresso não cancelado
+  and c.status = 'aprovado' -- Compra aprovada
+order by
+  p.nome;
+
+
 -- PERGUNTA 8: Organizador com maior receita
 -- Tabelas: organizador, evento, lote_ingresso, ingresso, compra
 -- Filtros: compras aprovadas
 -- Agrupamento: por organizador
 -- Ordenação: receita decrescente, trazer só o primeiro
 -- Colunas: nome do organizador, valor acumulado
+
+select
+  o.nome as "Organizador", -- Nome do organizador
+  SUM(c.valor_total) as "Receita Acumulada" -- Soma de todas as compras válidas
+from
+  organizador o
+  inner join evento e on o.id = e.organizador_id -- Organizador tem eventos
+  inner join lote_ingresso l on e.id = l.evento_id -- Evento possui lotes
+  inner join ingresso i on i.lote_id = l.id -- Lote possui ingressos
+  inner join compra c on  inner join compra c oni.lote_id = l.id  -- Ingresso vem de uma compra
+where
+  c.status = 'aprovado' -- Apenas compras válidas
+group by
+  o.id,
+  o.nome -- Agrupa por organizador
+order by
+  "Receita Acumulada" desc -- Maior receita primeiro
+limit
+   1; -- Retorna apenas o organizador com maior receita
+
 
 -- PERGUNTA 9: Eventos com mais cancelamentos que check-ins
 -- Tabelas: evento, lote_ingresso, ingresso, checkin
