@@ -183,6 +183,25 @@ limit
 -- Agrupamento: por evento
 -- Condição do grupo: contagem de cancelados maior que contagem de check-ins
 -- Colunas: título do evento, total de cancelamentos, total de check-ins
+select
+  e.titulo as "Evento", -- Título do evento
+  COUNT(i_cancel.id) as "Cancelamentos", -- Conta ingressos cancelados
+  COUNT(ck.id) as "Check-ins" -- Conta check-ins realizados
+from
+  evento e
+  inner join lote_ingresso l on e.id = l.evento_id -- Evento → lotes
+  left join ingresso i_cancel on l.id = i_cancel.lote_id -- LEFT JOIN: ingressos cancelados
+  and i_cancel.status = 'cancelado' -- Filtra apenas cancelados
+  left join ingresso i_valido on l.id = i_valido.lote_id -- LEFT JOIN: ingressos válidos
+  and i_valido.status in ('valido', 'utilizado') -- Filtra apenas válidos
+  left join checkin ck on i_valido.id = ck.ingresso_id -- LEFT JOIN: check-ins dos válidos
+group by
+  e.id,
+  e.titulo
+having
+  COUNT(i_cancel.id) > COUNT(ck.id) -- Filtra: cancelamentos > check-ins
+order by
+  "Cancelamentos" desc;
 
 -- PERGUNTA 10: Categoria mais popular nos últimos 60 dias
 -- Tabelas: categoria_evento, evento, lote_ingresso, ingresso, compra
@@ -190,12 +209,46 @@ limit
 -- Agrupamento: por categoria
 -- Ordenação: total de ingressos decrescente, trazer só a primeira
 -- Colunas: nome da categoria, total de ingressos
+select
+  cat.nome as "Categoria", -- Nome da categoria
+  COUNT(i.id) as "Total de Ingressos" -- Conta todos os ingressos válidos
+from
+  categoria_evento cat
+  inner join evento e on cat.id = e.categoria_id -- Categoria → eventos
+  inner join lote_ingresso l on e.id = l.evento_id -- Evento → lotes
+  inner join ingresso i on l.id = i.lote_id -- Lote → ingressos
+  and i.status in ('valido', 'utilizado') -- Apenas ingressos não cancelados
+  inner join compra c on i.compra_id = c.id -- Ingresso → compra
+  and c.data_compra >= NOW() - INTERVAL '60 days' -- Filtra compras dos últimos 60 dias
+  and c.status = 'aprovado' -- Apenas compras aprovadas
+group by
+  cat.id,
+  cat.nome -- Agrupa por categoria
+order by
+  "Total de Ingressos" desc -- Maior primeiro
+limit
+  1;
 
 -- PERGUNTA 11: Compras pendentes há mais de 2 dias
 -- Tabelas: participante, compra, ingresso, lote_ingresso, evento
 -- Filtros: status pendente, data da compra anterior a 2 dias atrás
 -- Ordenação: data da compra crescente (mais antigas primeiro)
 -- Colunas: nome do participante, título do evento, valor da compra, data da compra
+select
+  p.nome as "Participante", -- Nome do participante
+  e.titulo as "Evento", -- Título do evento
+  c.valor_total as "Valor", -- Valor da compra
+  c.data_compra as "Data da Compra" -- Data em que a compra foi feita
+from
+  participante p
+  inner join compra c on p.id = c.participante_id -- Participante → compra
+  and c.status = 'pendente' -- Apenas compras pendentes
+  and c.data_compra < NOW() - INTERVAL '2 days' -- Pendente há mais de 2 dias
+  inner join ingresso i on c.id = i.compra_id -- Compra → ingresso
+  inner join lote_ingresso l on i.lote_id = l.id -- Ingresso → lote
+  inner join evento e on l.evento_id = e.id -- Lote → evento
+order by
+  c.data_compra asc;
 
 -- PERGUNTA 12: Top 5 eventos por receita por vaga
 -- Tabelas: evento, lote_ingresso, ingresso, compra
@@ -203,3 +256,28 @@ limit
 -- Agrupamento: por evento
 -- Ordenação: receita por vaga decrescente, trazer só os 5 primeiros
 -- Colunas: título do evento, capacidade total, receita por vaga (2 casas decimais)
+select
+  e.titulo as "Evento", -- Título do evento
+  SUM(l.capacidade_maxima) as "Capacidade Total", -- Soma da capacidade de todos os lotes
+  COALESCE(SUM(c.valor_total), 0) as "Receita Total", -- Soma das compras aprovadas
+  ROUND(
+    COALESCE(SUM(c.valor_total), 0) / SUM(l.capacidade_maxima),
+    2
+  ) as "Receita por Vaga"
+  -- Divide receita total pela capacidade total; ROUND para 2 casas decimais
+from
+  evento e
+  inner join lote_ingresso l on e.id = l.evento_id -- Evento → lotes
+  left join ingresso i on l.id = i.lote_id -- LEFT JOIN: lotes sem ingressos
+  and i.status in ('valido', 'utilizado') -- Apenas ingressos não cancelados
+  left join compra c on i.compra_id = c.id -- LEFT JOIN: ingressos sem compra
+  and c.status = 'aprovado' -- Apenas compras aprovadas
+group by
+  e.id,
+  e.titulo
+having
+  SUM(l.capacidade_maxima) > 0 -- Garante que há capacidade > 0
+order by
+  "Receita por Vaga" desc
+limit
+  5;
