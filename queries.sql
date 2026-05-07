@@ -82,10 +82,10 @@ from
   evento
   inner join organizador on evento.organizador_id = organizador.id -- o organizador_id do evento é igual ao id do organizador, entao ele puxa os dados do organizador
   inner join lote_ingresso lote on lote.evento_id = evento.id -- Conecta evento aos seus lotes. Se o evento tiver 2 lotes, aparece 2 vezes
-  inner join ingresso on ingresso.lote_id = lote.id -- -- Puxa os ingressos de cada lote cada ingresso vendido gera uma linha
-  inner join compra on ingresso.compra_id = compra.id -- Puxa a compra de cada ingresso onde esta o valortotal e o status da compra
-where
-  compra.status = 'aprovado' -- Filtra apenas compras aprovadas
+  left join ingresso on ingresso.lote_id = lote.id -- LEFT JOIN: mantém o evento mesmo sem ingressos vendidos
+    and ingresso.status in ('valido', 'utilizado') -- filtro vai no ON, não no WHERE, pra não virar INNER JOIN
+  left join compra on ingresso.compra_id = compra.id -- LEFT JOIN: mantém o evento mesmo sem compras aprovadas
+    and compra.status = 'aprovado' -- filtro vai no ON pelo mesmo motivo acima
 group by
   evento.id, -- Garante que cada evento seja um grupo separado (mesmo que dois eventos tenham o mesmo nome)
   evento.titulo,
