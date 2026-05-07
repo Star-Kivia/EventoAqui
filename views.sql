@@ -47,8 +47,7 @@ from
   inner join evento e on o.id = e.organizador_id
   inner join lote_ingresso l on e.id = l.evento_id -- Correção: e.id no lugar de e.d
   inner join ingresso i on l.id = i.lote_id
-  and i.status in ('valido', 'utilizado') -- Só ingressos não cancelados
-  inner join compra c on i.compra_id = c.id
+  inner join compra c on i.compra_id = c.id -- Correção: Se nao removesse a linha anterior uma compra aprovada cujos ingressos foram cancelados some da receita
   and c.status = 'aprovado' -- Só compras aprovadas
 group by
   o.id,
